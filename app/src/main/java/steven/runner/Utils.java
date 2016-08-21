@@ -1,5 +1,8 @@
 package steven.runner;
 
+import android.app.ActivityManager;
+import android.app.Service;
+import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 
@@ -55,5 +58,15 @@ public class Utils {
 		if (l.getExtras() != null) {
 			l.getExtras().remove("steven");
 		}
+	}
+
+	public static final boolean isServiceRunning(final Context context, final Class<? extends Service> clazz) {
+		final ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+		for (final ActivityManager.RunningServiceInfo service : am.getRunningServices(Integer.MAX_VALUE)) {
+			if (clazz.getName().equals(service.service.getClassName())) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

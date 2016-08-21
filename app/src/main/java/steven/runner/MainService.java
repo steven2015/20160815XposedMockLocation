@@ -18,6 +18,10 @@ public class MainService extends Service implements Runnable {
 	private volatile boolean active = false;
 	public static volatile double latitude = 0;
 	public static volatile double longitude = 0;
+	public static volatile double meterPerSecond = 0;
+	public static volatile double normalizedLatitudeDelta = 0;
+	public static volatile double normalizedLongitudeDelta = 0;
+	public static volatile LocationSentCallback callback;
 
 	@Nullable
 	@Override
@@ -49,16 +53,24 @@ public class MainService extends Service implements Runnable {
 			Location l = new Location(LocationManager.GPS_PROVIDER);
 			l.setLatitude(latitude);
 			l.setLongitude(longitude);
-			l.setAccuracy(5.0f);
-			l.setSpeed(1);
+			l.setAccuracy((float) (5 + Math.random() * 10));
+			final double newLatitude = ((int) ((latitude + normalizedLatitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+			final double newLongitude = ((int) ((longitude + normalizedLongitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+			final float[] results = new float[1];
+			Location.distanceBetween(latitude, longitude, newLatitude, newLongitude, results);
+			l.setSpeed((float) (((int) (results[0] * 10)) / 10.0));
 			l.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
 			l.setTime(System.currentTimeMillis());
 			Bundle bundle = new Bundle();
-			bundle.putInt("satellites", 10);
+			bundle.putInt("satellites", 7);
 			l.setExtras(bundle);
 			lm.setTestProviderLocation("MOCK", l);
-			latitude = latitude + 0.000001;
-			longitude = longitude + 0.000001;
+			latitude = newLatitude;
+			longitude = newLongitude;
+			LocationSentCallback callback = MainService.callback;
+			if (callback != null) {
+				callback.locationSent(l);
+			}
 			try {
 				Thread.sleep(1010);
 			} catch (InterruptedException e) {
