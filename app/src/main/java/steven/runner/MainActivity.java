@@ -12,6 +12,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.view.View;
 import android.widget.AdapterView;
@@ -38,6 +39,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		DESTINATIONS.add(new Destination("藍田", 22.303001, 114.238930));
 		DESTINATIONS.add(new Destination("旺角", 22.319338, 114.169333));
 		DESTINATIONS.add(new Destination("荔枝角", 22.338233, 114.146131));
+		DESTINATIONS.add(new Destination("九龍塘", 22.3369175, 114.1758522));
 	}
 
 	@Override
@@ -178,7 +180,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		countDown = (int) (60 + Math.random() * 240);
 	}
 
-	public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		getCurrentLocation();
 	}
 
