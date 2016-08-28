@@ -13,7 +13,12 @@
 
     <Spinner
         android:id="@+id/ddlSpeed"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></Spinner>
+
+    <Spinner
+        android:id="@+id/ddlMode"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"></Spinner>
 
     <Button
@@ -32,13 +37,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:text="Latitude:"/>
 
             <EditText
                 android:id="@+id/txtLatitude"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
+
         </TableRow>
 
         <TableRow>
@@ -46,7 +52,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal"
+                android:inputType="numberDecimal|numberSigned"
                 android:text="Longitude:"/>
 
             <EditText
@@ -58,6 +64,82 @@
 
     <Spinner
         android:id="@+id/ddlDestination"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"></Spinner>
+
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TableRow>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Latitude Delta:"/>
+
+            <EditText
+                android:id="@+id/txtDeltaLatitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal|numberSigned"
+                />
+
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Longitude Delta:"/>
+
+            <EditText
+                android:id="@+id/txtDeltaLongitude"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal|numberSigned"
+                />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Count Down:"/>
+
+            <EditText
+                android:id="@+id/txtCountDown"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:inputType="number"/>
+        </TableRow>
+    </TableLayout>
+
+    <Button
+        android:id="@+id/btnStay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="btnStayClick"
+        android:text="Stay"/>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <View
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/circle"/>
+
+        <TextView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/circle"/>
+    </RelativeLayout>
 </LinearLayout>

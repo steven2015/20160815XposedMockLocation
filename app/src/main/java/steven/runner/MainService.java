@@ -3,12 +3,20 @@ package steven.runner;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.Nullable;
+import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 /**
  * Created by steven.lam.t.f on 2016/8/19.
@@ -22,6 +30,11 @@ public class MainService extends Service implements Runnable {
 	public static volatile double normalizedLatitudeDelta = 0;
 	public static volatile double normalizedLongitudeDelta = 0;
 	public static volatile LocationSentCallback callback;
+	public static volatile boolean stay = false;
+
+	private View backgroundCircle;
+	private TextView joystick;
+	private LinearLayout window;
 
 	@Nullable
 	@Override
@@ -31,6 +44,7 @@ public class MainService extends Service implements Runnable {
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		createUI();
 		LocationManager lm = (LocationManager) super.getSystemService(LOCATION_SERVICE);
 		lm.setTestProviderEnabled("MOCK", true);
 		active = true;
@@ -41,6 +55,8 @@ public class MainService extends Service implements Runnable {
 
 	@Override
 	public void onDestroy() {
+		WindowManager windowManager = (WindowManager) super.getSystemService(Context.WINDOW_SERVICE);
+		//windowManager.removeView(this.window);
 		LocationManager lm = (LocationManager) super.getSystemService(LOCATION_SERVICE);
 		lm.setTestProviderEnabled("MOCK", false);
 		active = false;
@@ -54,11 +70,19 @@ public class MainService extends Service implements Runnable {
 			l.setLatitude(latitude);
 			l.setLongitude(longitude);
 			l.setAccuracy((float) (5 + Math.random() * 10));
-			final double newLatitude = ((int) ((latitude + normalizedLatitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
-			final double newLongitude = ((int) ((longitude + normalizedLongitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
-			final float[] results = new float[1];
-			Location.distanceBetween(latitude, longitude, newLatitude, newLongitude, results);
-			l.setSpeed((float) (((int) (results[0] * 10)) / 10.0));
+			final double newLatitude;
+			final double newLongitude;
+			if (stay) {
+				newLatitude = latitude;
+				newLongitude = longitude;
+				l.setSpeed(0f);
+			} else {
+				newLatitude = ((int) ((latitude + normalizedLatitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+				newLongitude = ((int) ((longitude + normalizedLongitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+				final float[] results = new float[1];
+				Location.distanceBetween(latitude, longitude, newLatitude, newLongitude, results);
+				l.setSpeed((float) (((int) (results[0] * 10)) / 10.0));
+			}
 			l.setElapsedRealtimeNanos(SystemClock.elapsedRealtimeNanos());
 			l.setTime(System.currentTimeMillis());
 			Bundle bundle = new Bundle();
@@ -77,5 +101,31 @@ public class MainService extends Service implements Runnable {
 				// do nothing
 			}
 		}
+	}
+
+	private void createUI() {
+		// create element
+		backgroundCircle = new View(this);
+		joystick = new TextView(this);
+		window = new LinearLayout(this);
+		// initialize
+		backgroundCircle.setBackgroundResource(R.drawable.circle);
+		joystick.setBackgroundResource(R.drawable.circle);
+		// touch listener
+		joystick.setOnTouchListener(new View.OnTouchListener() {
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				return false;
+			}
+		});
+		// display
+		window.addView(backgroundCircle, 360, 360);
+		window.addView(joystick, 120, 120);
+		WindowManager windowManager = (WindowManager) super.getSystemService(Context.WINDOW_SERVICE);
+		final WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.TYPE_SYSTEM_ALERT, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
+		layoutParams.gravity = Gravity.TOP | Gravity.START;
+		layoutParams.x = 0;
+		layoutParams.y = 100;
+		//windowManager.addView(this.window, layoutParams);
 	}
 }

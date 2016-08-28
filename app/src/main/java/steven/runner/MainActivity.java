@@ -5,15 +5,17 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -27,6 +29,9 @@ import java.util.List;
 
 public class MainActivity extends Activity implements LocationSentCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 	private static final List<Destination> DESTINATIONS = new ArrayList<>();
+
+	private enum Mode {NORMAL, RANDOM, ROUTE}
+
 	private Handler handler;
 	private TextView txtLatitude;
 	private TextView txtLongitude;
@@ -34,6 +39,13 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 	private Spinner ddlDestination;
 	private Button btnUseCurrentLocation;
 	private int countDown;
+	private Spinner ddlMode;
+	private Mode currentMode;
+	private Button btnStay;
+	private TextView txtDeltaLatitude;
+	private TextView txtDeltaLongitude;
+	private TextView txtCountDown;
+	private volatile boolean activeActivity;
 
 	static {
 		DESTINATIONS.add(new Destination("藍田", 22.303001, 114.238930));
@@ -53,12 +65,23 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		ddlSpeed = (Spinner) super.findViewById(R.id.ddlSpeed);
 		ddlDestination = (Spinner) super.findViewById(R.id.ddlDestination);
 		btnUseCurrentLocation = (Button) super.findViewById(R.id.btnUseCurrentLocation);
+		ddlMode = (Spinner) super.findViewById(R.id.ddlMode);
+		btnStay = (Button) super.findViewById(R.id.btnStay);
+		txtDeltaLatitude = (TextView) super.findViewById(R.id.txtDeltaLatitude);
+		txtDeltaLongitude = (TextView) super.findViewById(R.id.txtDeltaLongitude);
+		txtCountDown = (TextView) super.findViewById(R.id.txtCountDown);
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
 				switch (msg.what) {
 					case 1234:
 						txtLatitude.setText(String.valueOf(msg.getData().getDouble("LAT")));
 						txtLongitude.setText(String.valueOf(msg.getData().getDouble("LNG")));
+						txtCountDown.setText(String.valueOf(msg.getData().getInt("CD")));
+						break;
+					case 1235:
+						txtDeltaLatitude.setText(String.valueOf(msg.getData().getDouble("DLAT")));
+						txtDeltaLongitude.setText(String.valueOf(msg.getData().getDouble("DLNG")));
+						txtCountDown.setText(String.valueOf(msg.getData().getInt("CD")));
 						break;
 				}
 			}
@@ -114,7 +137,45 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 			}
 		});
 		MainService.meterPerSecond = Constants.WALK_SPEED;
-		setNextDirection();
+		ArrayAdapter<String> modeArray = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"NORMAL", "RANDOM", "ROUTE"});
+		modeArray.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		ddlMode.setAdapter(modeArray);
+		ddlMode.setSelection(0);
+		ddlMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+				if (position == 0) {
+					currentMode = Mode.NORMAL;
+				} else if (position == 1) {
+					currentMode = Mode.RANDOM;
+				} else if (position == 2) {
+					currentMode = Mode.ROUTE;
+				}
+			}
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {
+				parent.setSelection(0);
+				currentMode = Mode.NORMAL;
+			}
+		});
+		currentMode = Mode.NORMAL;
+
+		ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
+		if (!Settings.canDrawOverlays(this)) {
+			Intent x = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+			startActivityForResult(x, -1);
+		}
+	}
+
+	protected void onResume() {
+		super.onResume();
+		activeActivity = true;
+	}
+
+	protected void onPause() {
+		super.onPause();
+		activeActivity = false;
 	}
 
 	public void btnToggleServiceClick(View view) {
@@ -132,6 +193,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 				Toast.makeText(this, "Please input location.", Toast.LENGTH_SHORT).show();
 				return;
 			}
+			setNextDirection();
 			super.startService(intent);
 			button.setText("Stop");
 			txtLatitude.setEnabled(false);
@@ -149,26 +211,35 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 	}
 
 	public void btnUseCurrentLocationClick(View view) {
-		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 0);
-			return;
-		}
 		getCurrentLocation();
 	}
 
 	@Override
 	public void locationSent(Location l) {
-		countDown--;
-		if (countDown < 0) {
-			setNextDirection();
+		if (currentMode == Mode.NORMAL) {
+
+		} else if (currentMode == Mode.RANDOM) {
+			if (btnStay.getText().equals("Move")) {
+
+			} else {
+				countDown--;
+				if (countDown < 0) {
+					setNextDirection();
+				}
+				if (activeActivity) {
+					Bundle bundle = new Bundle();
+					bundle.putDouble("LAT", l.getLatitude());
+					bundle.putDouble("LNG", l.getLongitude());
+					bundle.putInt("CD", countDown);
+					Message msg = new Message();
+					msg.what = 1234;
+					msg.setData(bundle);
+					handler.sendMessage(msg);
+				}
+			}
+		} else if (currentMode == Mode.ROUTE) {
+
 		}
-		Bundle bundle = new Bundle();
-		bundle.putDouble("LAT", l.getLatitude());
-		bundle.putDouble("LNG", l.getLongitude());
-		Message msg = new Message();
-		msg.what = 1234;
-		msg.setData(bundle);
-		handler.sendMessage(msg);
 	}
 
 	public void setNextDirection() {
@@ -178,10 +249,19 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		MainService.normalizedLatitudeDelta = a / c;
 		MainService.normalizedLongitudeDelta = b / c;
 		countDown = (int) (60 + Math.random() * 240);
+		if (activeActivity) {
+			Bundle bundle = new Bundle();
+			bundle.putDouble("DLAT", MainService.normalizedLatitudeDelta);
+			bundle.putDouble("DLNG", MainService.normalizedLongitudeDelta);
+			bundle.putInt("CD", countDown);
+			Message msg = new Message();
+			msg.what = 1235;
+			msg.setData(bundle);
+			handler.sendMessage(msg);
+		}
 	}
 
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-		getCurrentLocation();
 	}
 
 	public void getCurrentLocation() {
@@ -217,5 +297,29 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		lm.requestSingleUpdate(LocationManager.GPS_PROVIDER, ll, null);
 		//noinspection MissingPermission
 		lm.requestSingleUpdate(LocationManager.NETWORK_PROVIDER, ll, null);
+	}
+
+	public void btnStayClick(View view) {
+		Button button = (Button) view;
+		if (button.getText().equals("Stay")) {
+			button.setText("Move");
+			MainService.stay = true;
+		} else {
+			button.setText("Stay");
+			MainService.stay = false;
+		}
+		try {
+			double a = Double.parseDouble(txtDeltaLatitude.getText().toString());
+			double b = Double.parseDouble(txtDeltaLongitude.getText().toString());
+			double c = Math.sqrt(a * a + b * b);
+			MainService.normalizedLatitudeDelta = a / c;
+			MainService.normalizedLongitudeDelta = b / c;
+			txtDeltaLatitude.setText(String.valueOf(MainService.normalizedLatitudeDelta));
+			txtDeltaLongitude.setText(String.valueOf(MainService.normalizedLongitudeDelta));
+			countDown = Integer.parseInt(txtCountDown.getText().toString());
+		} catch (Exception e) {
+			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+			Log.e("steven", "", e);
+		}
 	}
 }
