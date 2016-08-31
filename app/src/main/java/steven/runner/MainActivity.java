@@ -249,16 +249,14 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		MainService.normalizedLatitudeDelta = a / c;
 		MainService.normalizedLongitudeDelta = b / c;
 		countDown = (int) (60 + Math.random() * 240);
-		if (activeActivity) {
-			Bundle bundle = new Bundle();
-			bundle.putDouble("DLAT", MainService.normalizedLatitudeDelta);
-			bundle.putDouble("DLNG", MainService.normalizedLongitudeDelta);
-			bundle.putInt("CD", countDown);
-			Message msg = new Message();
-			msg.what = 1235;
-			msg.setData(bundle);
-			handler.sendMessage(msg);
-		}
+		Bundle bundle = new Bundle();
+		bundle.putDouble("DLAT", MainService.normalizedLatitudeDelta);
+		bundle.putDouble("DLNG", MainService.normalizedLongitudeDelta);
+		bundle.putInt("CD", countDown);
+		Message msg = new Message();
+		msg.what = 1235;
+		msg.setData(bundle);
+		handler.sendMessage(msg);
 	}
 
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
