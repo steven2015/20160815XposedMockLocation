@@ -27,10 +27,9 @@ public class MainService extends Service implements Runnable {
 	public static volatile double latitude = 0;
 	public static volatile double longitude = 0;
 	public static volatile double meterPerSecond = 0;
-	public static volatile double normalizedLatitudeDelta = 0;
-	public static volatile double normalizedLongitudeDelta = 0;
 	public static volatile LocationSentCallback callback;
 	public static volatile boolean stay = false;
+	public static volatile double direction = 0; // -pi to pi
 
 	private View backgroundCircle;
 	private TextView joystick;
@@ -77,8 +76,8 @@ public class MainService extends Service implements Runnable {
 				newLongitude = longitude;
 				l.setSpeed(0f);
 			} else {
-				newLatitude = ((int) ((latitude + normalizedLatitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
-				newLongitude = ((int) ((longitude + normalizedLongitudeDelta * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+				newLatitude = ((int) ((latitude + Math.cos(direction) * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
+				newLongitude = ((int) ((longitude + Math.sin(direction) * 0.00001 * meterPerSecond) * 1000000)) / 1000000.0;
 				final float[] results = new float[1];
 				Location.distanceBetween(latitude, longitude, newLatitude, newLongitude, results);
 				l.setSpeed((float) (((int) (results[0] * 10)) / 10.0));

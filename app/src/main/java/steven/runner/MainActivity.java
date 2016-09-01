@@ -42,8 +42,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 	private Spinner ddlMode;
 	private Mode currentMode;
 	private Button btnStay;
-	private TextView txtDeltaLatitude;
-	private TextView txtDeltaLongitude;
+	private TextView txtDirection;
 	private TextView txtCountDown;
 	private volatile boolean activeActivity;
 
@@ -67,8 +66,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 		btnUseCurrentLocation = (Button) super.findViewById(R.id.btnUseCurrentLocation);
 		ddlMode = (Spinner) super.findViewById(R.id.ddlMode);
 		btnStay = (Button) super.findViewById(R.id.btnStay);
-		txtDeltaLatitude = (TextView) super.findViewById(R.id.txtDeltaLatitude);
-		txtDeltaLongitude = (TextView) super.findViewById(R.id.txtDeltaLongitude);
+		txtDirection = (TextView) super.findViewById(R.id.txtDirection);
 		txtCountDown = (TextView) super.findViewById(R.id.txtCountDown);
 		handler = new Handler() {
 			public void handleMessage(Message msg) {
@@ -79,8 +77,7 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 						txtCountDown.setText(String.valueOf(msg.getData().getInt("CD")));
 						break;
 					case 1235:
-						txtDeltaLatitude.setText(String.valueOf(msg.getData().getDouble("DLAT")));
-						txtDeltaLongitude.setText(String.valueOf(msg.getData().getDouble("DLNG")));
+						txtDirection.setText(String.valueOf(msg.getData().getInt("DIR")));
 						txtCountDown.setText(String.valueOf(msg.getData().getInt("CD")));
 						break;
 				}
@@ -243,15 +240,11 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 	}
 
 	public void setNextDirection() {
-		double a = Math.random() * 2 - 1;
-		double b = Math.random() * 2 - 1;
-		double c = Math.sqrt(a * a + b * b);
-		MainService.normalizedLatitudeDelta = a / c;
-		MainService.normalizedLongitudeDelta = b / c;
+		int direction = (int) (Math.random() * 360) - 179;
+		MainService.direction = direction / 180.0 * Math.PI;
 		countDown = (int) (60 + Math.random() * 240);
 		Bundle bundle = new Bundle();
-		bundle.putDouble("DLAT", MainService.normalizedLatitudeDelta);
-		bundle.putDouble("DLNG", MainService.normalizedLongitudeDelta);
+		bundle.putInt("DIR", direction);
 		bundle.putInt("CD", countDown);
 		Message msg = new Message();
 		msg.what = 1235;
@@ -307,13 +300,8 @@ public class MainActivity extends Activity implements LocationSentCallback, Acti
 			MainService.stay = false;
 		}
 		try {
-			double a = Double.parseDouble(txtDeltaLatitude.getText().toString());
-			double b = Double.parseDouble(txtDeltaLongitude.getText().toString());
-			double c = Math.sqrt(a * a + b * b);
-			MainService.normalizedLatitudeDelta = a / c;
-			MainService.normalizedLongitudeDelta = b / c;
-			txtDeltaLatitude.setText(String.valueOf(MainService.normalizedLatitudeDelta));
-			txtDeltaLongitude.setText(String.valueOf(MainService.normalizedLongitudeDelta));
+			int direction = Integer.parseInt(txtDirection.getText().toString());
+			MainService.direction = direction / 180.0 * Math.PI;
 			countDown = Integer.parseInt(txtCountDown.getText().toString());
 		} catch (Exception e) {
 			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();

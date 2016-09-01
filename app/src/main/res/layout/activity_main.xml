@@ -76,30 +76,15 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Latitude Delta:"/>
+                android:text="Direction (-179 to 180):"/>
 
             <EditText
-                android:id="@+id/txtDeltaLatitude"
+                android:id="@+id/txtDirection"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal|numberSigned"
+                android:inputType="number|numberSigned"
                 />
 
-        </TableRow>
-
-        <TableRow>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Longitude Delta:"/>
-
-            <EditText
-                android:id="@+id/txtDeltaLongitude"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:inputType="numberDecimal|numberSigned"
-                />
         </TableRow>
 
         <TableRow>
